@@ -1,0 +1,118 @@
+-- ============================================================
+-- PRODUCTIVE BEES
+-- ============================================================
+-- Zweck:
+--   Combs und Omega-Comb-Blocks zentrifugieren, Vanilla-Drops
+--   und Chorus-Produkte einlagern, Bee Breeding,
+--   BaBee Incubator und Gen-Extraktion automatisieren.
+--
+-- Mindest-Setup:
+--   1x SFM Controller, 1x AE2-/FE-Interface
+--   >=1x Advanced Beehive, 1x Heated Centrifuge
+--   1x Breeding Chamber, 1x BaBee Incubator, 1x Eltern-Barrel
+--   1x Bottler, 1x Collector, 1x Gene-Barrel
+--   1x zweite Centrifuge, 1x Gene Indexer
+--
+-- Labels:
+--   interface, hive, centrifuge
+--   breeder, incubator, barrel, bottler,
+--   gene_barrel, gene_centrifuge, gene_indexer
+--
+-- Ausfuehrung:
+--   FE jede 1 Tick; Bee-/Zucht-Items alle 20 Ticks;
+--   Gen-Verarbeitung alle 20 Ticks + 5 Ticks Versatz.
+--
+-- Status:
+--   Aus bisherigen Teilskripten zusammengefuehrt; nicht alles end-to-end getestet.
+--
+-- Hinweise:
+--   Vollskript braucht ALLE genannten Labels / Maschinen.
+--   Bei fehlender Zucht/Gen-Strecke die Teilbloecke entfernen.
+--   Bei Omega Comb Blocks: Heated Centrifuge + Rezeptpruefung.
+--   Vanilla-Honeycombs, Honey Blocks, Chorus direkt in AE2.
+--   Vor allem Slots des Bottlers und Gene-Centrifuge pruefen.
+-- ============================================================
+
+NAME "Productive Bees"
+
+EVERY 1 TICKS DO
+    INPUT fe:: FROM interface
+    OUTPUT fe:: TO EACH centrifuge, breeder, incubator, bottler, gene_centrifuge
+END
+
+EVERY 20 TICKS DO
+    -- Beehives mit Glasflaschen bestuecken
+    INPUT minecraft:glass_bottle FROM interface
+    OUTPUT RETAIN 8 TO EACH hive
+    FORGET
+
+    -- Vanilla-Honigprodukte und Ender-Bee-Drops direkt zu AE2
+    INPUT minecraft:honeycomb,
+          minecraft:honey_block,
+          minecraft:honeycomb_block,
+          minecraft:chorus_flower,
+          minecraft:chorus_fruit
+    FROM hive
+    OUTPUT TO interface
+    FORGET
+
+    INPUT minecraft:honey_bottle FROM hive
+    OUTPUT TO interface
+    FORGET
+
+    -- Resource Combs + Omega Comb Blocks in die Heated Centrifuge
+    INPUT WITH (#c:honeycombs OR #c:storage_blocks/honeycombs) FROM hive
+    OUTPUT EXCEPT minecraft:honeycomb TO centrifuge SLOTS 1
+    FORGET
+
+    -- Centrifuge Items / Fluids ausgeben
+    INPUT FROM centrifuge SLOTS 2-10
+    OUTPUT TO interface
+    FORGET
+
+    INPUT fluid:: FROM centrifuge
+    OUTPUT fluid:: TO interface
+    FORGET
+
+    -- Breeding Chamber: Poppys, Eltern verbleiben in Slots 1-2
+    INPUT minecraft:poppy FROM interface
+    OUTPUT RETAIN 32 TO breeder SLOTS 3
+    OUTPUT RETAIN 32 TO breeder SLOTS 4
+    FORGET
+
+    INPUT productivebees:bee_cage FROM interface
+    OUTPUT RETAIN 16 TO breeder SLOTS 0
+    FORGET
+
+    -- Baby Bee Cage zum Incubator
+    INPUT FROM breeder SLOTS 5
+    OUTPUT TO incubator SLOTS 0
+    FORGET
+
+    INPUT productivebees:honey_treat FROM interface
+    OUTPUT RETAIN 40 TO incubator SLOTS 1
+    FORGET
+
+    -- Erwachsene Biene im Cage ins Eltern-/Sammel-Barrel
+    INPUT FROM incubator SLOTS 2
+    OUTPUT TO barrel
+END
+
+-- Gen-Verarbeitung 5 Ticks versetzt, Collector fuellt gene_barrel
+EVERY 20 PLUS 5 TICKS DO
+    INPUT minecraft:glass_bottle FROM interface
+    OUTPUT RETAIN 64 TO bottler SLOTS 0
+    FORGET
+
+    INPUT productivebees:gene_bottle FROM gene_barrel
+    OUTPUT TO gene_centrifuge SLOTS 1
+    FORGET
+
+    INPUT productivebees:gene FROM gene_centrifuge SLOTS 2-10
+    OUTPUT TO gene_indexer
+    FORGET
+
+    INPUT productivebees:bee_cage FROM gene_barrel
+    OUTPUT TO breeder SLOTS 0
+    OUTPUT TO interface
+END

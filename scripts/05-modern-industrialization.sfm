@@ -1,0 +1,79 @@
+-- ============================================================
+-- MODERN INDUSTRIALIZATION
+-- ============================================================
+-- Zweck:
+--   Bronze Boiler und Coke Oven mit Wasser/Coal/Steam versorgen,
+--   Coke und Creosote in Functional Storage ablegen,
+--   Coke zu Coke Dust und Bricks zu Brick Dust macerieren.
+--
+-- Mindest-Setup:
+--   1x SFM Controller, 1x AE2-/FE-Interface, 1x Sink
+--   1x Bronze Boiler, 1x Coke Oven mit Item-/Fluid-Hatches
+--   1x Functional Storage Controller + Steam/Coke/Creosote Drawers
+--   2x Bronze Macerator mit maschinenseitigem Inputfilter
+--   Je 1x Dust Drawer pro Macerator (MI Auto-Output)
+--
+-- Labels:
+--   interface, sink, boiler, storage, coke_item_in,
+--   coke_steam_in, coke_item_out, coke_fluid_out, macerator
+--
+-- Ausfuehrung:
+--   Versorgung: alle 20 GLOBAL Ticks.
+--   Langsame Coke-Oven-Outputs: alle 60 GLOBAL + 5 Ticks.
+--
+-- Status:
+--   Coke-Versorgung FROM storage -> TOP SIDE vom Nutzer bestaetigt.
+--
+-- Hinweise:
+--   Macerator-Inputs maschinenseitig auf jeweiliges Rezept filtern.
+--   Macerator-Outputs laufen via MI Auto-Output, nicht via SFM.
+--   Steam Drawer ist ueber Functional Storage Controller erreichbar.
+--   Storage Bus zu AE2 read-only; keine FS Puller-Upgrades.
+-- ============================================================
+
+NAME "Modern Industrialization"
+
+EVERY 20 GLOBAL TICKS DO
+    -- Wasser zum Boiler
+    INPUT fluid:minecraft:water FROM sink
+    OUTPUT fluid:: TO boiler
+    FORGET
+
+    -- Coal zu Boiler und Coke Oven
+    INPUT minecraft:coal FROM interface
+    OUTPUT RETAIN 8 TO boiler
+    OUTPUT RETAIN 32 TO coke_item_in
+    FORGET
+
+    -- Steam ins zentrale Functional Storage (Steam Drawer)
+    INPUT fluid:modern_industrialization:steam FROM boiler
+    OUTPUT fluid:: TO storage
+    FORGET
+
+    -- Steam verteilen; Coke Oven zuerst
+    INPUT fluid:modern_industrialization:steam FROM storage
+    OUTPUT fluid:: TO coke_steam_in
+    OUTPUT fluid:: TO EACH macerator
+    FORGET
+
+    -- Coke aus Functional Storage: keine RETAIN-Ausgabe!
+    -- Diese Kombination wurde ingame als funktionierend bestaetigt.
+    INPUT 16 modern_industrialization:coke FROM storage
+    OUTPUT TO EACH macerator TOP SIDE
+    FORGET
+
+    -- Bricks aus dem AE2 Interface an den zweiten Macerator;
+    -- die Maschinen nehmen nur ihr eigenes Rezept an.
+    INPUT 16 minecraft:brick FROM interface
+    OUTPUT TO EACH macerator TOP SIDE
+END
+
+-- Langsame Outputs zur Lastverteilung, 5 Ticks versetzt
+EVERY 60 GLOBAL PLUS 5 TICKS DO
+    INPUT FROM coke_item_out
+    OUTPUT TO storage
+    FORGET
+
+    INPUT fluid:modern_industrialization:creosote FROM coke_fluid_out
+    OUTPUT fluid:: TO storage
+END

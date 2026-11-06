@@ -1,0 +1,55 @@
+-- ============================================================
+-- DRACONIC EVOLUTION FUSION CRAFTING
+-- ============================================================
+-- Zweck:
+--   AE2-Processing-Patterns aus einem Barrel auf Fusion Core
+--   und 12 Injectors verteilen, Ergebnis zum Pattern Provider.
+--
+-- Mindest-Setup:
+--   1x SFM Controller, 1x Flux Accessor/AE2 FE-Quelle
+--   1x AE2 Pattern Provider mit Processing Patterns
+--   1x Barrel, 1x Fusion Crafting Core, 12x Fusion Injector
+--   1x Redstone Timer/Impulsgeber am Core
+--
+-- Labels:
+--   interface (Flux Accessor), provider, barrel, core, injector
+--
+-- Ausfuehrung:
+--   FE jede 1 Tick; Craft-Items alle 20 Ticks.
+--
+-- Status:
+--   Crafting und Energieoptimierung vom Nutzer bestaetigt.
+--
+-- Hinweise:
+--   Alle 12 Injectors mit Label injector, Single Item Mode.
+--   Pattern Provider: Lock until primary result returned.
+--   Catalyst muss zuverlaessig in Barrel Slot 0 liegen.
+--   Redstone Timer startet Rezept (z.B. 20 Ticks).
+--   INPUT fe:: FROM interface reicht; EACH SIDE nur beim OUTPUT.
+--   Sonderrezepte (z.B. Chaos Fragments) ggf. separat behandeln.
+-- ============================================================
+
+NAME "Draconic Fusion Crafting"
+
+EVERY 1 TICKS DO
+    -- Flux Accessor ist als interface gelabelt
+    INPUT fe:: FROM interface
+    -- Diese eine EACH-SIDE-Ausgabe ist ausreichend
+    OUTPUT fe:: TO injector EACH SIDE
+END
+
+EVERY 20 TICKS DO
+    -- Fertigen Craft direkt an denselben Pattern Provider zurueck
+    INPUT FROM core SLOTS 1
+    OUTPUT TO provider
+    FORGET
+
+    -- Ingredient-Slots im Barrel an die Injectors
+    INPUT FROM barrel SLOTS 1-26
+    OUTPUT 1 TO EACH injector
+    FORGET
+
+    -- Catalyst aus Barrel Slot 0 zum Fusion Core
+    INPUT FROM barrel SLOTS 0
+    OUTPUT TO core SLOTS 0
+END

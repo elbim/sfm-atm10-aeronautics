@@ -1,0 +1,83 @@
+-- ============================================================
+-- MOB FARM
+-- ============================================================
+-- Zweck:
+--   Mobdrops nach Ausruestung und sonstigen Items sortieren,
+--   Enchants als Buecher sichern, Ausruestung verwerten.
+--
+-- Mindest-Setup:
+--   1x AE2-/FE-Interface, 1x Mobdrop-Chest
+--   1x Industrial Foregoing Enchantment Sorter
+--   1x Industrial Foregoing Enchantment Extractor
+--   1x Apotheosis Salvaging Table, 1x Reject-Chest
+--   1x SFM Controller + Kabel/Labels
+--
+-- Labels:
+--   interface, chest, sorter, extractor, salvager, trash
+--
+-- Ausfuehrung:
+--   FE jede 1 Tick; Items alle 20 Ticks.
+--
+-- Status:
+--   ENTWURF: nicht vollstaendig in dieser Konversation bestaetigt.
+--
+-- Hinweise:
+--   Zunaechst KEINE Trashcan verwenden: Label trash auf Test-Chest!
+--   Seiten EAST/WEST/NORTH/SOUTH und Table-Slots ingame pruefen.
+--   Filterung von Mod-Items haengt von #c:tools / #c:armors ab.
+--   Ein abgelehnter Transfer kann auch an vollen Slots liegen.
+-- ============================================================
+
+NAME "Mob Farm"
+
+EVERY 1 TICKS DO
+    INPUT fe:: FROM interface
+    OUTPUT fe:: TO EACH sorter, extractor
+END
+
+EVERY 20 TICKS DO
+    -- Normale Buecher fuer Enchantment Extractor
+    INPUT minecraft:book FROM interface
+    OUTPUT RETAIN 16 TO extractor NORTH SIDE
+    FORGET
+
+    -- Tools, Waffen und Ruestungen
+    INPUT WITH (#c:tools OR #c:armors) FROM chest
+    OUTPUT TO sorter TOP SIDE
+    FORGET
+
+    -- Andere Drops (auch Enchanted Books) direkt nach AE2
+    INPUT WITHOUT (#c:tools OR #c:armors) FROM chest
+    OUTPUT TO interface
+    FORGET
+
+    -- Enchanted Ausruestung
+    INPUT FROM sorter EAST SIDE
+    OUTPUT TO extractor TOP SIDE
+    FORGET
+
+    -- Abgezogene Enchantments
+    INPUT minecraft:enchanted_book FROM extractor EAST SIDE
+    OUTPUT TO interface
+    FORGET
+
+    -- Salvaging-Ergebnisse abholen
+    INPUT FROM salvager BOTTOM SIDE
+    OUTPUT TO interface
+    FORGET
+
+    -- WICHTIG: trash zuerst als Reject-Chest betreiben!
+    IF salvager BOTTOM SIDE HAS EQ 0 THEN
+        INPUT 1 FROM sorter WEST SIDE
+        OUTPUT TO salvager TOP SIDE SLOT 0
+        OUTPUT TO trash
+        FORGET
+    END
+
+    IF salvager BOTTOM SIDE HAS EQ 0 THEN
+        INPUT 1 FROM extractor SOUTH SIDE
+        OUTPUT TO salvager TOP SIDE SLOT 0
+        OUTPUT TO trash
+        FORGET
+    END
+END

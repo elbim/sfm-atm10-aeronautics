@@ -1,0 +1,57 @@
+-- ============================================================
+-- HOSTILE NEURAL NETWORKS
+-- ============================================================
+-- Zweck:
+--   FE und Prediction Matrices an Chambers und Data Center,
+--   Generalized Predictions und weitere Outputs nach AE2.
+--
+-- Mindest-Setup:
+--   1x AE2-/FE-Interface mit Matrix-Autocrafting
+--   >=1x Simulation Chamber
+--   1x HNN Data Center mit Energy-, Input-, Output-Ports
+--   1x SFM Controller
+--
+-- Labels:
+--   interface, chamber, datacenter_energy, datacenter_input, datacenter_output
+--
+-- Ausfuehrung:
+--   FE jede 1 Tick; Items alle 20 Ticks.
+--
+-- Status:
+--   ENTWURF: genauen Data-Center-Portzugriff und Item-IDs testen.
+--
+-- Hinweise:
+--   Data Center erzeugt Loot eigenstaendig; es verarbeitet
+--   nicht automatisch normale Mob Predictions aus Chambers.
+--   Fuer Prediction-zu-Loot ist ggf. ein Loot Fabricator noetig.
+--   Die Filter fuer Prediction-Typen sind nicht ingame verifiziert.
+-- ============================================================
+
+NAME "Hostile Neural Networks"
+
+EVERY 1 TICKS DO
+    INPUT fe:: FROM interface
+    OUTPUT fe:: TO EACH chamber
+    OUTPUT fe:: TO datacenter_energy
+END
+
+EVERY 20 TICKS DO
+    -- Matrices aus AE2
+    INPUT hostilenetworks:prediction_matrix FROM interface
+    OUTPUT RETAIN 16 TO EACH chamber
+    OUTPUT RETAIN 64 TO datacenter_input
+    FORGET
+
+    -- NOTE: genauen Itemfilter in der Pack-Version pruefen
+    INPUT *_prediction FROM chamber
+    OUTPUT TO interface
+    FORGET
+
+    INPUT hostilenetworks:prediction FROM chamber
+    OUTPUT TO interface
+    FORGET
+
+    -- Fertige Data-Center-Produkte
+    INPUT FROM datacenter_output
+    OUTPUT TO interface
+END
