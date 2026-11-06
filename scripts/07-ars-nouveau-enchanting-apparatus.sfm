@@ -1,0 +1,72 @@
+
+-- ==========================================
+-- ARS NOUVEAU - ENCHANTING APPARATUS
+-- ==========================================
+-- Zweck:
+-- Automatisches Crafting mit Ars Nouveau.
+-- AE2 liefert Rezepte ueber einen Pattern Provider.
+-- SFM verteilt Zutaten auf die Arcane Pedestals
+-- und den zentralen Enchanting Apparatus.
+-- Fertige Crafts gehen zurueck an AE2.
+--
+-- Mindest-Setup:
+-- 1x SFM Controller
+-- 1x AE2 Pattern Provider
+-- 1x Barrel
+-- 1x Enchanting Apparatus
+-- 1x Arcane Core
+-- 8x Arcane Pedestal
+-- Source-Versorgung (z.B. Source Jars)
+--
+-- Labels:
+-- barrel    = Rezept-Zwischenlager
+-- pedestal  = Alle 8 Arcane Pedestals
+-- apparatus = Enchanting Apparatus
+-- provider  = AE2 Pattern Provider
+--
+-- AE2:
+-- Processing Patterns verwenden
+-- Catalyst als erste Zutat definieren
+-- Lock until primary result returned
+--
+-- Besonderheiten:
+-- Pedestals werden zuerst befuellt.
+-- Catalyst folgt 1 Tick spaeter.
+-- Crafting startet automatisch.
+--
+-- ==========================================
+
+NAME "Ars Nouveau Enchanting Apparatus"
+
+-- ==========================================
+-- PEDESTALS UND OUTPUT
+-- Alle 20 Ticks
+-- ==========================================
+
+EVERY 20 GLOBAL TICKS DO
+
+    -- Fertige Crafts zum Pattern Provider
+    INPUT FROM apparatus
+    OUTPUT TO provider
+    FORGET
+
+    -- Zutaten auf die Arcane Pedestals
+    INPUT FROM barrel SLOTS 1-26
+    OUTPUT TO pedestal
+    FORGET
+
+END
+
+
+-- ==========================================
+-- CATALYST
+-- Alle 20 Ticks + 1 Tick Versatz
+-- ==========================================
+
+EVERY 20 GLOBAL PLUS 1 TICKS DO
+
+    -- Catalyst zuletzt in den Apparatus
+    INPUT FROM barrel SLOTS 0
+    OUTPUT TO apparatus
+
+END
