@@ -1,0 +1,30 @@
+-- ============================================================
+-- ANLAGE: <Anlagenname>
+-- ============================================================
+-- Zweck:
+--   <Was wird automatisiert?>
+--
+-- Mindest-Setup:
+--   1x SFM Controller
+--   <Maschinen, Speicher, FE-Quelle, AE2 ...>
+--
+-- Labels:
+--   <label1>, <label2>
+--
+-- Ausfuehrung:
+--   <Intervalle und Versatz>
+--
+-- Status:
+--   ENTWURF / TEILWEISE GETESTET / GETESTET
+--
+-- Hinweise:
+--   <Input/Output-Seiten, Rezeptfilter, Sperren, AE2-Einstellungen>
+-- ============================================================
+
+NAME "<Anlagenname>"
+
+EVERY 20 TICKS DO
+    -- Beispiel-Transport durch echte Labels ersetzen
+    INPUT FROM <quelle>
+    OUTPUT TO <ziel>
+END
