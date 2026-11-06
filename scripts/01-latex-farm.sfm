@@ -1,0 +1,57 @@
+-- ============================================================
+-- LATEX FARM
+-- ============================================================
+-- Zweck:
+--   Acacia Logs an Placer, Wasser und FE versorgen,
+--   Latex per AE2-Level-Emitter umschalten, Dry Rubber ausgeben.
+--
+-- Mindest-Setup:
+--   1x AE2-/FE-Interface, 1x SFM Controller
+--   1x Placer, >=1x Fluid Extractor, 1x Latex Processing Unit
+--   1x AE2 Level Emitter + Redstone zum Controller
+--
+-- Labels:
+--   interface, extractor, processor, placer
+--
+-- Ausfuehrung:
+--   FE jede 1 Tick; Items/Fluids alle 20 Ticks.
+--
+-- Status:
+--   Vom Nutzer angepasst; insbesondere BOTTOM SIDE fuer Dry Rubber.
+--
+-- Hinweise:
+--   Level Emitter sendet Signal, wenn Latex < 1024 mB.
+--   Die Redstone-Bedingung schaltet exklusiv zwischen AE2 und Processing um.
+-- ============================================================
+
+NAME "Latex Farm"
+
+-- Energieversorgung
+EVERY 1 TICKS DO
+    INPUT fe:: FROM interface
+    OUTPUT fe:: TO EACH extractor, processor
+END
+
+-- Items und Fluids
+EVERY 20 TICKS DO
+    INPUT minecraft:acacia_log FROM interface
+    OUTPUT TO placer
+    FORGET
+
+    INPUT fluid:minecraft:water FROM interface
+    OUTPUT fluid:: TO processor
+    FORGET
+
+    INPUT fluid:industrialforegoing:latex FROM extractor
+    IF REDSTONE GT 0 THEN
+        -- Latexbestand in AE2 unter 1024 mB
+        OUTPUT fluid:: TO interface
+    ELSE
+        OUTPUT fluid:: TO processor
+    END
+    FORGET
+
+    -- Vom Nutzer bestaetigte Ausgabeseite
+    INPUT FROM processor BOTTOM SIDE
+    OUTPUT TO interface
+END
